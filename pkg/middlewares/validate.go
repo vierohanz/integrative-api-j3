@@ -14,6 +14,10 @@ func ValidateBody(c fiber.Ctx, dest any) error {
 		return shared.ErrBadRequest("Invalid request body")
 	}
 
+	return ValidateStruct(dest)
+}
+
+func ValidateStruct(dest any) error {
 	if err := validate.Struct(dest); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
 			return shared.ErrBadRequest(formatValidationError(validationErrors))

@@ -2,36 +2,23 @@ package routes
 
 import (
 	"gofiber-starterkit/app/api/controllers"
-	"gofiber-starterkit/pkg/middlewares"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 func RegisterRoutes(
 	app *fiber.App,
-	userController *controllers.UserController,
-	authMiddleware *middlewares.AuthMiddleware,
+	productController *controllers.ProductController,
 ) {
 	const ApiVersion = "/api/v1"
 
 	api := app.Group(ApiVersion)
 
-	auth := api.Group("/auth")
-	auth.Post("/register", userController.Register)
-	auth.Post("/login", userController.Login)
-	auth.Post("/refresh", userController.Refresh)
-
-	protected := api.Group("")
-	protected.Use(authMiddleware.AuthRequired())
-
-	protected.Get("/auth/me", userController.Me)
-	protected.Put("/auth/me", userController.UpdateProfile)
-	protected.Post("/auth/logout", userController.Logout)
-	protected.Post("/auth/logout-all", userController.LogoutAll)
-
-	users := protected.Group("/users")
-	users.Get("", userController.List)
-	users.Get("/:id", userController.Get)
-	users.Put("/:id", userController.Update)
-	users.Delete("/:id", userController.Delete)
+	products := api.Group("/products")
+	products.Get("", productController.List)
+	products.Get("/:id/show", productController.Get)
+	products.Post("", productController.Create)
+	products.Put("/:id/update", productController.Update)
+	products.Patch("/:id/status", productController.UpdateStatus)
+	products.Delete("/:id/delete", productController.Delete)
 }

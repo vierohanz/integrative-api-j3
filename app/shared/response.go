@@ -16,8 +16,10 @@ func RespondError(ctx fiber.Ctx, err error) error {
 		message = err.Error()
 	}
 	jerr := ctx.Status(code).JSON(BaseResponse{
-		Success: false,
-		Message: message,
+		Success:  false,
+		Message:  message,
+		Metadata: &Metadata{},
+		Data:     map[string]any{},
 	})
 	if jerr != nil {
 		return jerr
@@ -26,10 +28,14 @@ func RespondError(ctx fiber.Ctx, err error) error {
 }
 
 func RespondSuccess(ctx fiber.Ctx, message string, data any) error {
+	if data == nil {
+		data = map[string]any{}
+	}
 	return ctx.JSON(BaseResponse{
-		Success: true,
-		Message: message,
-		Data:    data,
+		Success:  true,
+		Message:  message,
+		Data:     data,
+		Metadata: &Metadata{},
 	})
 }
 

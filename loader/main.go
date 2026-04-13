@@ -13,7 +13,7 @@ import (
 
 func main() {
 	stmts, err := bunschema.New(bunschema.DialectPostgres).Load(
-		&models.User{},
+		&models.Product{},
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load bun schema: %v\n", err)

@@ -27,9 +27,8 @@ func main() {
 	c.Provide(dragonfly.New)
 	c.Provide(rustfs.New)
 
-	c.Provide(services.NewUserService)
-	c.Provide(controllers.NewUserController)
-	c.Provide(middlewares.NewAuthMiddleware)
+	c.Provide(services.NewProductService)
+	c.Provide(controllers.NewProductController)
 
 	c.Provide(func() *fiber.App {
 		cfg := config.FiberConfig()
@@ -49,12 +48,11 @@ func main() {
 
 	c.Invoke(func(
 		app *fiber.App,
-		userController *controllers.UserController,
-		authMiddleware *middlewares.AuthMiddleware,
+		productController *controllers.ProductController,
 		dbClient *bun.DB,
 		dragonflyClient *dragonfly.DragonflyClient,
 	) {
-		routes.RegisterRoutes(app, userController, authMiddleware)
+		routes.RegisterRoutes(app, productController)
 
 		defer dbClient.Close()
 		defer dragonflyClient.Client.Close()

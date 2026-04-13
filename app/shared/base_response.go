@@ -2,14 +2,14 @@ package shared
 
 type BaseResponse struct {
 	Success  bool      `json:"success"`
-	Metadata *Metadata `json:"metadata,omitempty"`
 	Message  string    `json:"message"`
-	Data     any       `json:"data,omitempty"`
+	Metadata *Metadata `json:"metadata"`
+	Data     any       `json:"data"`
 }
 
 type Metadata struct {
-	Total   int `json:"total"`
-	Page    int `json:"page"`
-	PerPage int `json:"per_page"`
-	Pages   int `json:"pages"`
+	PerPage     int `json:"per_page,omitempty"`
+	CurrentPage int `json:"current_page,omitempty"`
+	TotalRow    int `json:"total_row,omitempty"`
+	TotalPage   int `json:"total_page,omitempty"`
 }
