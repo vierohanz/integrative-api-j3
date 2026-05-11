@@ -31,35 +31,83 @@ func (c *AuthController) Login(ctx fiber.Ctx) error {
 		return err
 	}
 
-	token, err := c.service.CreateToken(ctx.Context(), user.ID)
+	accessToken, err := c.service.CreateToken(ctx.Context(), user.ID)
 	if err != nil {
 		return err
 	}
 
-	// Set Cookie
+	refreshToken, err := c.service.CreateRefreshToken(ctx.Context(), user.ID)
+	if err != nil {
+		return err
+	}
+
+	// Set Cookies
 	ctx.Cookie(&fiber.Cookie{
 		Name:     "access_token",
-		Value:    token,
+		Value:    accessToken,
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: true,
 		SameSite: "Lax",
 	})
-	
-	return shared.RespondSuccess(ctx, "Logged in successfully", LoginResponse{
-		User_ID:  user.ID.String(),
-		Username: user.Username,
+
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		HTTPOnly: true,
+		SameSite: "Lax",
 	})
+	
+	return shared.RespondSuccess(ctx, "Logged in successfully", TransformUser(user))
+}
+
+func (c *AuthController) Refresh(ctx fiber.Ctx) error {
+	refreshToken := ctx.Cookies("refresh_token")
+	if refreshToken == "" {
+		return shared.ErrUnauthorized("Refresh token missing")
+	}
+
+	newAccessToken, newRefreshToken, err := c.service.RefreshToken(ctx.Context(), refreshToken)
+	if err != nil {
+		return err
+	}
+
+	// Update Cookies
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    newAccessToken,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HTTPOnly: true,
+		SameSite: "Lax",
+	})
+
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    newRefreshToken,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		HTTPOnly: true,
+		SameSite: "Lax",
+	})
+
+	return shared.RespondSuccess(ctx, "Token refreshed successfully", nil)
 }
 
 func (c *AuthController) Logout(ctx fiber.Ctx) error {
-	token := ctx.Cookies("access_token")
-	if token != "" {
-		_ = c.service.Logout(ctx.Context(), token)
-	}
+	accessToken := ctx.Cookies("access_token")
+	refreshToken := ctx.Cookies("refresh_token")
+	
+	_ = c.service.Logout(ctx.Context(), accessToken, refreshToken)
 
-	// Clear Cookie
+	// Clear Cookies
 	ctx.Cookie(&fiber.Cookie{
 		Name:     "access_token",
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		HTTPOnly: true,
+	})
+
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,

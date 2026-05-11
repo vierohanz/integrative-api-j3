@@ -2,7 +2,6 @@ package routes
 
 import (
 	"gofiber-starterkit/app/api/auth"
-	"gofiber-starterkit/app/api/post"
 	"gofiber-starterkit/app/api/product"
 
 	"github.com/gofiber/fiber/v3"
@@ -11,7 +10,6 @@ import (
 func RegisterRoutes(
 	app *fiber.App,
 	productController *product.ProductController,
-	postController *post.PostController,
 	authController *auth.AuthController,
 	authMiddleware fiber.Handler,
 ) {
@@ -22,6 +20,7 @@ func RegisterRoutes(
 	authGroup := api.Group("/auth")
 	authGroup.Post("/login", authController.Login)
 	authGroup.Post("/logout", authController.Logout)
+	authGroup.Post("/refresh", authController.Refresh)
 
 	products := api.Group("/products")
 	products.Get("", productController.List)
@@ -30,7 +29,4 @@ func RegisterRoutes(
 	products.Put("/:id/update", productController.Update)
 	products.Patch("/:id/status", productController.UpdateStatus)
 	products.Delete("/:id/delete", productController.Delete)
-
-	posts := api.Group("/posts")
-	posts.Post("", authMiddleware, postController.Create)
 }

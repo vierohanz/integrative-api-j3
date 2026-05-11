@@ -16,19 +16,28 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type ProductService struct {
+type ProductService interface {
+	Create(ctx context.Context, req *CreateProductRequest, image *multipart.FileHeader) (*models.Product, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error)
+	List(ctx context.Context, page, perPage int) ([]*models.Product, int, error)
+	Update(ctx context.Context, id uuid.UUID, req *UpdateProductRequest, image *multipart.FileHeader) (*models.Product, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+type productService struct {
 	db           *bun.DB
 	rustfsClient *rustfs.RustfsClient
 }
 
-func NewProductService(db *bun.DB, rustfsClient *rustfs.RustfsClient) *ProductService {
-	return &ProductService{
+func NewProductService(db *bun.DB, rustfsClient *rustfs.RustfsClient) ProductService {
+	return &productService{
 		db:           db,
 		rustfsClient: rustfsClient,
 	}
 }
 
-func (s *ProductService) Create(ctx context.Context, req *CreateProductRequest, image *multipart.FileHeader) (*models.Product, error) {
+func (s *productService) Create(ctx context.Context, req *CreateProductRequest, image *multipart.FileHeader) (*models.Product, error) {
 	product := &models.Product{
 		Name:        req.Name,
 		Description: req.Description,
@@ -54,7 +63,7 @@ func (s *ProductService) Create(ctx context.Context, req *CreateProductRequest, 
 	return product, nil
 }
 
-func (s *ProductService) GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error) {
+func (s *productService) GetByID(ctx context.Context, id uuid.UUID) (*models.Product, error) {
 	product := new(models.Product)
 	err := s.db.NewSelect().Model(product).Where("id = ?", id).Scan(ctx)
 	if err != nil {
@@ -64,7 +73,7 @@ func (s *ProductService) GetByID(ctx context.Context, id uuid.UUID) (*models.Pro
 	return product, nil
 }
 
-func (s *ProductService) List(ctx context.Context, page, perPage int) ([]*models.Product, int, error) {
+func (s *productService) List(ctx context.Context, page, perPage int) ([]*models.Product, int, error) {
 	var products []*models.Product
 	count, err := s.db.NewSelect().
 		Model(&products).
@@ -83,7 +92,7 @@ func (s *ProductService) List(ctx context.Context, page, perPage int) ([]*models
 	return products, count, nil
 }
 
-func (s *ProductService) Update(ctx context.Context, id uuid.UUID, req *UpdateProductRequest, image *multipart.FileHeader) (*models.Product, error) {
+func (s *productService) Update(ctx context.Context, id uuid.UUID, req *UpdateProductRequest, image *multipart.FileHeader) (*models.Product, error) {
 	product, err := s.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -128,7 +137,7 @@ func (s *ProductService) Update(ctx context.Context, id uuid.UUID, req *UpdatePr
 	return product, nil
 }
 
-func (s *ProductService) UpdateStatus(ctx context.Context, id uuid.UUID) error {
+func (s *productService) UpdateStatus(ctx context.Context, id uuid.UUID) error {
 	_, err := s.db.NewUpdate().
 		Model((*models.Product)(nil)).
 		Set("status = NOT status").
@@ -141,7 +150,7 @@ func (s *ProductService) UpdateStatus(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *ProductService) Delete(ctx context.Context, id uuid.UUID) error {
+func (s *productService) Delete(ctx context.Context, id uuid.UUID) error {
 	product, err := s.GetByID(ctx, id)
 	if err != nil {
 		return err
@@ -158,7 +167,7 @@ func (s *ProductService) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *ProductService) uploadImage(image *multipart.FileHeader) (string, error) {
+func (s *productService) uploadImage(image *multipart.FileHeader) (string, error) {
 	file, err := image.Open()
 	if err != nil {
 		return "", shared.ErrInternalServerError("Failed to open image file")
@@ -178,7 +187,7 @@ func (s *ProductService) uploadImage(image *multipart.FileHeader) (string, error
 	return imageKey, nil
 }
 
-func (s *ProductService) populateImageURL(product *models.Product) {
+func (s *productService) populateImageURL(product *models.Product) {
 	if product.ImageKey != nil {
 		url, err := s.rustfsClient.GetPresignedURL(*product.ImageKey)
 		if err == nil {

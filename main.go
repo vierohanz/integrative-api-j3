@@ -2,7 +2,6 @@ package main
 
 import (
 	"gofiber-starterkit/app/api/auth"
-	"gofiber-starterkit/app/api/post"
 	"gofiber-starterkit/app/api/product"
 	"gofiber-starterkit/app/routes"
 	"gofiber-starterkit/app/shared"
@@ -32,9 +31,7 @@ func main() {
 
 	c.Provide(product.NewProductService)
 	c.Provide(auth.NewAuthService)
-	c.Provide(post.NewPostService)
 	c.Provide(product.NewProductController)
-	c.Provide(post.NewPostController)
 	c.Provide(auth.NewAuthController)
 
 	c.Provide(func(dragonflyClient *dragonfly.DragonflyClient) *fiber.App {
@@ -62,12 +59,11 @@ func main() {
 	c.Invoke(func(
 		app *fiber.App,
 		productController *product.ProductController,
-		postController *post.PostController,
 		authController *auth.AuthController,
 		dbClient *bun.DB,
 		dragonflyClient *dragonfly.DragonflyClient,
 	) {
-		routes.RegisterRoutes(app, productController, postController, authController, middlewares.AuthRequired)
+		routes.RegisterRoutes(app, productController, authController, middlewares.AuthRequired)
 
 		defer dbClient.Close()
 		defer dragonflyClient.Client.Close()
