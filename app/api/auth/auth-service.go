@@ -5,7 +5,6 @@ import (
 	"gofiber-starterkit/app/models"
 	"gofiber-starterkit/app/shared"
 	"gofiber-starterkit/pkg/utils"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -40,25 +39,14 @@ func (s *authService) Login(ctx context.Context, username, password string) (*mo
 }
 
 func (s *authService) CreateToken(ctx context.Context, userID uuid.UUID) (string, error) {
-	token := utils.GenerateRandomString(32)
-	pat := &models.PersonalAccessToken{
-		UserID:    userID,
-		Token:     token,
-		ExpiresAt: time.Now().Add(24 * time.Hour),
-	}
-
-	_, err := s.db.NewInsert().Model(pat).Exec(ctx)
+	token, err := utils.GenerateJWT(userID)
 	if err != nil {
-		return "", shared.ErrInternalServerError("Failed to create access token")
+		return "", shared.ErrInternalServerError("Failed to generate JWT")
 	}
-
 	return token, nil
 }
 
 func (s *authService) Logout(ctx context.Context, token string) error {
-	_, err := s.db.NewDelete().
-		Model((*models.PersonalAccessToken)(nil)).
-		Where("token = ?", token).
-		Exec(ctx)
-	return err
+	// JWT is stateless, logout is handled by clearing the cookie in the controller
+	return nil
 }

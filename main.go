@@ -12,10 +12,12 @@ import (
 	"gofiber-starterkit/pkg/config"
 	"gofiber-starterkit/pkg/middlewares"
 	"gofiber-starterkit/pkg/utils"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/healthcheck"
+	"github.com/gofiber/fiber/v3/middleware/limiter"
 	"github.com/rs/zerolog/log"
 	"github.com/uptrace/bun"
 	"go.uber.org/dig"
@@ -45,6 +47,11 @@ func main() {
 			Level: compress.LevelBestSpeed,
 		}))
 
+		app.Use(limiter.New(limiter.Config{
+			Max:        100,
+			Expiration: 1 * time.Minute,
+		}))
+
 		middlewares.FiberMiddleware(app)
 
 		app.Get(healthcheck.LivenessEndpoint, healthcheck.New())
@@ -60,7 +67,7 @@ func main() {
 		dbClient *bun.DB,
 		dragonflyClient *dragonfly.DragonflyClient,
 	) {
-		routes.RegisterRoutes(app, productController, postController, authController, middlewares.AuthRequired(dbClient))
+		routes.RegisterRoutes(app, productController, postController, authController, middlewares.AuthRequired)
 
 		defer dbClient.Close()
 		defer dragonflyClient.Client.Close()

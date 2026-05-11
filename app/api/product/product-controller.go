@@ -4,7 +4,6 @@ import (
 	"math"
 	"strconv"
 
-	"gofiber-starterkit/app/models"
 	"gofiber-starterkit/app/shared"
 	"gofiber-starterkit/pkg/middlewares"
 
@@ -58,10 +57,7 @@ func (c *ProductController) List(ctx fiber.Ctx) error {
 
 	pages := int(math.Ceil(float64(total) / float64(perPage)))
 
-	var response []ProductListItemResponse
-	for _, p := range products {
-		response = append(response, c.mapToListItemResponse(p))
-	}
+	response := TransformProductList(products)
 
 	return shared.RespondSuccessWithMeta(ctx, "Products retrieved", response, &shared.Metadata{
 		TotalRow:    total,
@@ -83,7 +79,7 @@ func (c *ProductController) Get(ctx fiber.Ctx) error {
 		return err
 	}
 
-	return shared.RespondSuccess(ctx, "Product retrieved", c.mapToDetailResponse(product))
+	return shared.RespondSuccess(ctx, "Product retrieved", TransformProductDetail(product))
 }
 
 func (c *ProductController) Update(ctx fiber.Ctx) error {
@@ -134,26 +130,4 @@ func (c *ProductController) Delete(ctx fiber.Ctx) error {
 	}
 
 	return shared.RespondSuccess(ctx, "Product deleted", nil)
-}
-
-func (c *ProductController) mapToListItemResponse(p *models.Product) ProductListItemResponse {
-	return ProductListItemResponse{
-		ID:       p.ID,
-		Name:     p.Name,
-		Price:    p.Price,
-		Status:   p.Status,
-		ImageURL: p.ImageURL,
-	}
-}
-
-func (c *ProductController) mapToDetailResponse(p *models.Product) ProductDetailResponse {
-	return ProductDetailResponse{
-		ID:          p.ID,
-		Name:        p.Name,
-		Description: p.Description,
-		Price:       p.Price,
-		Stock:       p.Stock,
-		Status:      p.Status,
-		ImageURL:    p.ImageURL,
-	}
 }
