@@ -1,11 +1,9 @@
-package controllers
+package product
 
 import (
 	"math"
 	"strconv"
 
-	"gofiber-starterkit/app/api/services"
-	"gofiber-starterkit/app/api/types"
 	"gofiber-starterkit/app/models"
 	"gofiber-starterkit/app/shared"
 	"gofiber-starterkit/pkg/middlewares"
@@ -15,15 +13,15 @@ import (
 )
 
 type ProductController struct {
-	service *services.ProductService
+	service *ProductService
 }
 
-func NewProductController(service *services.ProductService) *ProductController {
+func NewProductController(service *ProductService) *ProductController {
 	return &ProductController{service: service}
 }
 
 func (c *ProductController) Create(ctx fiber.Ctx) error {
-	var req types.CreateProductRequest
+	var req CreateProductRequest
 	if err := ctx.Bind().Body(&req); err != nil {
 		return err
 	}
@@ -60,7 +58,7 @@ func (c *ProductController) List(ctx fiber.Ctx) error {
 
 	pages := int(math.Ceil(float64(total) / float64(perPage)))
 
-	var response []types.ProductListItemResponse
+	var response []ProductListItemResponse
 	for _, p := range products {
 		response = append(response, c.mapToListItemResponse(p))
 	}
@@ -95,7 +93,7 @@ func (c *ProductController) Update(ctx fiber.Ctx) error {
 		return shared.ErrBadRequest("Invalid product ID")
 	}
 
-	var req types.UpdateProductRequest
+	var req UpdateProductRequest
 	if err := ctx.Bind().Body(&req); err != nil {
 		return err
 	}
@@ -138,8 +136,8 @@ func (c *ProductController) Delete(ctx fiber.Ctx) error {
 	return shared.RespondSuccess(ctx, "Product deleted", nil)
 }
 
-func (c *ProductController) mapToListItemResponse(p *models.Product) types.ProductListItemResponse {
-	return types.ProductListItemResponse{
+func (c *ProductController) mapToListItemResponse(p *models.Product) ProductListItemResponse {
+	return ProductListItemResponse{
 		ID:       p.ID,
 		Name:     p.Name,
 		Price:    p.Price,
@@ -148,8 +146,8 @@ func (c *ProductController) mapToListItemResponse(p *models.Product) types.Produ
 	}
 }
 
-func (c *ProductController) mapToDetailResponse(p *models.Product) types.ProductDetailResponse {
-	return types.ProductDetailResponse{
+func (c *ProductController) mapToDetailResponse(p *models.Product) ProductDetailResponse {
+	return ProductDetailResponse{
 		ID:          p.ID,
 		Name:        p.Name,
 		Description: p.Description,

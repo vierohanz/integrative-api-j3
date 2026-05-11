@@ -1,8 +1,9 @@
 package main
 
 import (
-	"gofiber-starterkit/app/api/controllers"
-	"gofiber-starterkit/app/api/services"
+	"gofiber-starterkit/app/api/auth"
+	"gofiber-starterkit/app/api/post"
+	"gofiber-starterkit/app/api/product"
 	"gofiber-starterkit/app/routes"
 	"gofiber-starterkit/app/shared"
 	"gofiber-starterkit/pkg/client/db"
@@ -27,10 +28,14 @@ func main() {
 	c.Provide(dragonfly.New)
 	c.Provide(rustfs.New)
 
-	c.Provide(services.NewProductService)
-	c.Provide(controllers.NewProductController)
+	c.Provide(product.NewProductService)
+	c.Provide(auth.NewAuthService)
+	c.Provide(post.NewPostService)
+	c.Provide(product.NewProductController)
+	c.Provide(post.NewPostController)
+	c.Provide(auth.NewAuthController)
 
-	c.Provide(func() *fiber.App {
+	c.Provide(func(dragonflyClient *dragonfly.DragonflyClient) *fiber.App {
 		cfg := config.FiberConfig()
 		cfg.ErrorHandler = shared.RespondError
 
@@ -39,6 +44,7 @@ func main() {
 		app.Use(compress.New(compress.Config{
 			Level: compress.LevelBestSpeed,
 		}))
+
 		middlewares.FiberMiddleware(app)
 
 		app.Get(healthcheck.LivenessEndpoint, healthcheck.New())
@@ -48,11 +54,13 @@ func main() {
 
 	c.Invoke(func(
 		app *fiber.App,
-		productController *controllers.ProductController,
+		productController *product.ProductController,
+		postController *post.PostController,
+		authController *auth.AuthController,
 		dbClient *bun.DB,
 		dragonflyClient *dragonfly.DragonflyClient,
 	) {
-		routes.RegisterRoutes(app, productController)
+		routes.RegisterRoutes(app, productController, postController, authController, middlewares.AuthRequired(dbClient))
 
 		defer dbClient.Close()
 		defer dragonflyClient.Client.Close()

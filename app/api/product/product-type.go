@@ -1,4 +1,4 @@
-package types
+package product
 
 import "github.com/google/uuid"
 
@@ -34,5 +34,3 @@ type UpdateProductRequest struct {
 	Stock       *int    `form:"stock" json:"stock" validate:"omitempty,numeric,min=0"`
 	Status      *bool   `form:"status" json:"status"`
 }
-
-

@@ -1,4 +1,4 @@
-package services
+package product
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"gofiber-starterkit/app/api/types"
 	"gofiber-starterkit/app/models"
 	"gofiber-starterkit/app/shared"
 	"gofiber-starterkit/pkg/client/rustfs"
@@ -29,7 +28,7 @@ func NewProductService(db *bun.DB, rustfsClient *rustfs.RustfsClient) *ProductSe
 	}
 }
 
-func (s *ProductService) Create(ctx context.Context, req *types.CreateProductRequest, image *multipart.FileHeader) (*models.Product, error) {
+func (s *ProductService) Create(ctx context.Context, req *CreateProductRequest, image *multipart.FileHeader) (*models.Product, error) {
 	product := &models.Product{
 		Name:        req.Name,
 		Description: req.Description,
@@ -84,7 +83,7 @@ func (s *ProductService) List(ctx context.Context, page, perPage int) ([]*models
 	return products, count, nil
 }
 
-func (s *ProductService) Update(ctx context.Context, id uuid.UUID, req *types.UpdateProductRequest, image *multipart.FileHeader) (*models.Product, error) {
+func (s *ProductService) Update(ctx context.Context, id uuid.UUID, req *UpdateProductRequest, image *multipart.FileHeader) (*models.Product, error) {
 	product, err := s.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
